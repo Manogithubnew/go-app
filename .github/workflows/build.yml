@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: nexus.local:8083/myrepo/goapp
+      IMAGE_NAME: 192.168.1.36:5000/goapp
 
     steps:
       - name: Checkout Code
@@ -19,20 +19,18 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Nexus Docker Registry
-        run: echo "${{ secrets.NEXUS_PASSWORD }}" | docker login nexus.local:8083 -u ${{ secrets.NEXUS_USERNAME }} --password-stdin
+        run: echo "${{ secrets.NEXUS_PASSWORD }}" | docker login http://192.168.1.36:5000 -u ${{ secrets.NEXUS_USERNAME }} --password-stdin
 
       - name: Build Docker Image
-        run: |
-          docker build -t $IMAGE_NAME:latest .
+        run: docker build -t $IMAGE_NAME:latest .
 
       - name: Push Image to Nexus
-        run: |
-          docker push $IMAGE_NAME:latest
+        run: docker push $IMAGE_NAME:latest
 
-      - name: Trigger Deployment Repo (Optional)
+      - name: Trigger Deployment (optional)
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.PAT_GITHUB }}
           repository: your-org/devops-infra
           event-type: deploy-goapp
-          client-payload: '{"image": "nexus.local:8083/myrepo/goapp:latest"}'
+          client-payload: '{"image": "192.168.1.36:5000/goapp:latest"}'
