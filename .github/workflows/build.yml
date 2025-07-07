@@ -46,6 +46,12 @@ jobs:
       - name: Set kubectl context to minikube
         run: minikube update-context
 
+      - name: Start Minikube
+        run: |
+          minikube start --driver=docker
+          minikube update-context
+          minikube status
+
       - name: Check if Kubernetes is running
         run: kubectl cluster-info
 
