@@ -1,14 +1,27 @@
-# ---------- Build stage ----------
-FROM golang:1.23 as builder
-WORKDIR /app
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o goapp .
+FROM golang:1.22
+LABEL app='goapp'
+LABEL TEM_NAME='Conatiner Team'
 
-# ---------- Final runtime image ----------
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/goapp .
+COPY . .
+
+USER root
+
+RUN go version
+
+WORKDIR /app
+
+RUN addgroup -S -g 2007 cet \
+    && adduser -S -D -u 2234 -s /sbin/nologin -h /app -G cet cetjobs \
+    && chown -R 2234:2007 /app
+
+RUN apk update && apk add --no-cache bash
+
+COPY . .
+USER cetjobs
+
 EXPOSE 8082
-ENV PORT=8082
-CMD ["./goapp"]
+
+RUN go build -o goapp
+
+ENTRYPOINT ["/app/goapp","--logtostderr=true"]
+
