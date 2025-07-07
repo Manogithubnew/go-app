@@ -1,5 +1,6 @@
 {
-  "chart": "generic-app",
+  "chart": "minikube-sampleapp",
+  "version": 0.1.0,
   "valuesFile": "./config/stg/values.yaml",
   "releaseName": "goapp"
 }
