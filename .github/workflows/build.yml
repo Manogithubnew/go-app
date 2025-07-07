@@ -80,5 +80,5 @@ jobs:
             -n $NAMESPACE \
             -f $VALUES_FILE
 
-      - name: Print Service URL
-        run: minikube service $RELEASE_NAME --url -n $NAMESPACE
+      #- name: Print Service URL
+        #run: minikube service $RELEASE_NAME --url -n $NAMESPACE
