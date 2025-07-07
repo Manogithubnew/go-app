@@ -1,4 +1,7 @@
 appName: goapp
+
+namespace: sample-goapp
+
 image:
   repository: 192.168.1.36:5000/goapp
   tag: latest
