@@ -1,0 +1,5 @@
+{
+  "chart": "generic-app",
+  "valuesFile": "./config/stg/values.yaml",
+  "releaseName": "goapp"
+}
