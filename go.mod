@@ -1,3 +1,3 @@
-module github.com/your-org/go-app
+module github.com/Manogithubnew/go-app
 
-go 1.20
+go 1.23
