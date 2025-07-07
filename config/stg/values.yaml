@@ -1,5 +1,3 @@
-appName: goapp
-
 namespace: sample-goapp
 
 image:
@@ -10,6 +8,7 @@ image:
 containerPort: 8080
 
 service:
+  name: goapp
   type: NodePort
   port: 8080
 
