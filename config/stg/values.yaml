@@ -18,4 +18,4 @@ env:
     value: "staging"
 
 imagePullSecrets:
-  - name: regcred
+  - name: image-registry-secret
