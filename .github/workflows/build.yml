@@ -13,7 +13,7 @@ jobs:
       MINIKUBE_HOME: /home/githubrunner/minikube
 
     steps:
-      - name: Checkout Code
+      - name: Checkout App Code
         uses: actions/checkout@v3
 
       - name: Set up Docker
@@ -31,8 +31,8 @@ jobs:
       - name: Checkout Helm Chart Repo
         uses: actions/checkout@v3
         with:
-          repository: your-org/devops-infra
-          path: devops-infra
+          repository: Manogithubnew/minikube-sampleapp
+          path: helm-chart
           token: ${{ secrets.PAT_GITHUB }}
 
       - name: Install jq
@@ -44,16 +44,26 @@ jobs:
           echo "CHART=$(jq -r .chart pipeline.json)" >> $GITHUB_ENV
           echo "VALUES_FILE=$(jq -r .valuesFile pipeline.json)" >> $GITHUB_ENV
           echo "RELEASE_NAME=$(jq -r .releaseName pipeline.json)" >> $GITHUB_ENV
+          echo "NAMESPACE=$(jq -r .namespace pipeline.json)" >> $GITHUB_ENV
 
       - name: Set up Minikube
         uses: medyagh/setup-minikube@v0.0.13
 
-      - name: Wait for cluster to be ready
-        run: kubectl get nodes
+      - name: Create Namespace if not exists
+        run: |
+          kubectl get ns $NAMESPACE || kubectl create ns $NAMESPACE
+
+      - name: Patch default SA to use regcred
+        run: |
+          kubectl patch serviceaccount default \
+            -p '{"imagePullSecrets": [{"name": "regcred"}]}' \
+            -n $NAMESPACE || true
 
       - name: Deploy using Helm
         run: |
-          helm upgrade --install $RELEASE_NAME ./devops-infra/helm-charts/$CHART -f $VALUES_FILE
+          helm upgrade --install $RELEASE_NAME ./helm-chart \
+            -n $NAMESPACE \
+            -f $VALUES_FILE
 
       - name: Print Service URL
-        run: minikube service $RELEASE_NAME --url
+        run: minikube service $RELEASE_NAME --url -n $NAMESPACE
