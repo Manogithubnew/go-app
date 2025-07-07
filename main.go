@@ -4,6 +4,7 @@ import (
     "fmt"
     "log"
     "net/http"
+    "os"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -12,6 +13,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
     http.HandleFunc("/", handler)
-    log.Println("Starting server on :8080")
-    log.Fatal(http.ListenAndServe(":8080", nil))
+
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8082" // fallback port if not set
+    }
+
+    log.Printf("Starting server on :%s\n", port)
+    log.Fatal(http.ListenAndServe(":"+port, nil))
 }
