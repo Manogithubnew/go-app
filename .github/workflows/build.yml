@@ -53,6 +53,21 @@ jobs:
         run: |
           kubectl get ns $NAMESPACE || kubectl create ns $NAMESPACE
 
+      - name: Create Image Pull Secret
+        env:
+          DOCKER_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          DOCKER_EMAIL: ${{ secrets.DOCKER_EMAIL }}
+        run: |
+          kubectl create secret docker-registry image-registry-secret \
+            --docker-server=192.168.1.36:5000 \
+            --docker-username=$DOCKER_USERNAME \
+            --docker-password=$DOCKER_PASSWORD \
+            --docker-email=$DOCKER_EMAIL \
+            --namespace=sample-goapp \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+
       - name: Patch default SA to use image-registry-secret
         run: |
           kubectl patch serviceaccount default \
