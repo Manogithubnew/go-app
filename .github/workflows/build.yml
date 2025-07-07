@@ -43,10 +43,8 @@ jobs:
           echo "RELEASE_NAME=$(jq -r .releaseName pipeline.json)" >> $GITHUB_ENV
           echo "NAMESPACE=$(jq -r .namespace pipeline.json)" >> $GITHUB_ENV
 
-      - name: Set KUBECONFIG for githubrunner
-        run: |
-          export KUBECONFIG=/home/githubrunner/.kube/config
-          minikube update-context
+      - name: Minikube context update
+        run:  minikube update-context
 
       - name: Check if Kubernetes is running
         run: kubectl cluster-info
