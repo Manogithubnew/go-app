@@ -46,8 +46,8 @@ jobs:
           echo "RELEASE_NAME=$(jq -r .releaseName pipeline.json)" >> $GITHUB_ENV
           echo "NAMESPACE=$(jq -r .namespace pipeline.json)" >> $GITHUB_ENV
 
-      - name: Set up Minikube
-        uses: medyagh/setup-minikube@v0.0.13
+      - name: Check Minikube status
+        run: minikube status
 
       - name: Create Namespace if not exists
         run: |
