@@ -1,5 +1,5 @@
 # ---------- Build stage ----------
-FROM golang:1.22 as builder
+FROM golang:1.23 AS builder
 LABEL app="goapp"
 WORKDIR /app
 COPY . .
@@ -15,7 +15,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o goapp .
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 
-# Add user/group again in runtime container
+# Create user/group in runtime image
 RUN addgroup -S -g 2007 cet && \
     adduser -S -D -u 2234 -s /sbin/nologin -h /app -G cet cetjobs
 
