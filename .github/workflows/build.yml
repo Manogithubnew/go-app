@@ -1,4 +1,4 @@
-name: Build and Push Go App
+name: Build, Push, and Deploy Go App
 
 on:
   push:
@@ -6,10 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: self-hosted
     env:
       IMAGE_NAME: 192.168.1.36:5000/goapp
+      MINIKUBE_HOME: /home/githubrunner/minikube
 
     steps:
       - name: Checkout Code
@@ -24,13 +25,35 @@ jobs:
       - name: Build Docker Image
         run: docker build -t $IMAGE_NAME:latest .
 
-      - name: Push Image to Nexus
+      - name: Push Docker Image to Nexus
         run: docker push $IMAGE_NAME:latest
 
-      - name: Trigger Deployment (optional)
-        uses: peter-evans/repository-dispatch@v3
+      - name: Checkout Helm Chart Repo
+        uses: actions/checkout@v3
         with:
-          token: ${{ secrets.PAT_GITHUB }}
           repository: your-org/devops-infra
-          event-type: deploy-goapp
-          client-payload: '{"image": "192.168.1.36:5000/goapp:latest"}'
+          path: devops-infra
+          token: ${{ secrets.PAT_GITHUB }}
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Read pipeline.json
+        id: config
+        run: |
+          echo "CHART=$(jq -r .chart pipeline.json)" >> $GITHUB_ENV
+          echo "VALUES_FILE=$(jq -r .valuesFile pipeline.json)" >> $GITHUB_ENV
+          echo "RELEASE_NAME=$(jq -r .releaseName pipeline.json)" >> $GITHUB_ENV
+
+      - name: Set up Minikube
+        uses: medyagh/setup-minikube@v0.0.13
+
+      - name: Wait for cluster to be ready
+        run: kubectl get nodes
+
+      - name: Deploy using Helm
+        run: |
+          helm upgrade --install $RELEASE_NAME ./devops-infra/helm-charts/$CHART -f $VALUES_FILE
+
+      - name: Print Service URL
+        run: minikube service $RELEASE_NAME --url
