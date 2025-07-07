@@ -35,9 +35,6 @@ jobs:
           path: helm-chart
           token: ${{ secrets.PAT_GITHUB }}
 
-      - name: Install jq
-        run: sudo yum install -y jq
-
       - name: Read pipeline.json
         id: config
         run: |
@@ -45,6 +42,9 @@ jobs:
           echo "VALUES_FILE=$(jq -r .valuesFile pipeline.json)" >> $GITHUB_ENV
           echo "RELEASE_NAME=$(jq -r .releaseName pipeline.json)" >> $GITHUB_ENV
           echo "NAMESPACE=$(jq -r .namespace pipeline.json)" >> $GITHUB_ENV
+
+      - name: Set kubectl context to minikube
+        run: minikube update-context
 
       - name: Check Minikube status
         run: minikube status
