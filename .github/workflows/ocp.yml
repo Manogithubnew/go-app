@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Run Init Stage from Shared Action
-        uses: Manogithubnew/shared-gha-actions/.github/actions/ocp-init@main
+        uses: Manogithubnew/shared-gha-actions/.github/actions/init.yml@master
 
   # 🔨 Stage 2: Build using shared action
   build:
@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Run Build Stage from Shared Action
-        uses: Manogithubnew/shared-gha-actions/.github/actions/ocp-build@main
+        uses: Manogithubnew/shared-gha-actions/.github/actions/build_enterprise.yml@master
 
   # 🚀 Stage 3: Deploy using shared action
   deploy:
@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Run Deploy Stage from Shared Action
-        uses: Manogithubnew/shared-gha-actions/.github/actions/ocp-deploy@main
+        uses: Manogithubnew/shared-gha-actions/.github/actions/ocp_deploy@master
         with:
           ocp_api_url: ${{ secrets.OCP_API_URL }}
           ocp_token: ${{ secrets.OCP_TOKEN }}
