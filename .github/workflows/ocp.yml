@@ -1,0 +1,42 @@
+name: Build and Deploy to OpenShift (via Shared Actions)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # 🧱 Stage 1: Initialization using shared action
+  init:
+    name: 🧰 Init
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Init Stage from Shared Action
+        uses: Manogithubnew/shared-gha-actions/.github/actions/ocp-init@main
+
+  # 🔨 Stage 2: Build using shared action
+  build:
+    name: 🔨 Build
+    runs-on: ubuntu-latest
+    needs: init
+
+    steps:
+      - name: Run Build Stage from Shared Action
+        uses: Manogithubnew/shared-gha-actions/.github/actions/ocp-build@main
+
+  # 🚀 Stage 3: Deploy using shared action
+  deploy:
+    name: 🚀 Deploy to OpenShift
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Run Deploy Stage from Shared Action
+        uses: Manogithubnew/shared-gha-actions/.github/actions/ocp-deploy@main
+        with:
+          ocp_api_url: ${{ secrets.OCP_API_URL }}
+          ocp_token: ${{ secrets.OCP_TOKEN }}
+          ocp_project: 'my-namespace'
+          deploy_file: 'deployment.yaml'
+          deployment_name: 'my-app'
