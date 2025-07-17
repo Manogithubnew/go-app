@@ -2,41 +2,79 @@ name: Build and Deploy to OpenShift (via Shared Actions)
 
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - 'main'
+      - 'master'
+      - 'release/**'
+      - 'develop/**'
+      - 'feature/**'
+    paths-ignore:
+      - '**/README.md'
+      - '.github/**'
+  pull_request:
   workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Select the operation'
+        type: choice
+        required: true
+        options:
+          - build
+          - docker-build
+          - deploy-to-stg
+          - deploy-to-sbx
+        default: build
+      artifact-version:
+        description: 'Artifact version'
+        type: string
+        required: false
+
+run-name: ${{ github.event.pull_request.title }} ${{ inputs.operation }} on ${{ github.ref_name }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  # 🧱 Stage 1: Initialization using shared action
+  #  Stage 1: Initialization using shared action
   init:
-    name: 🧰 Init
+    name:  Initialize
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Run Init Stage from Shared Action
-        uses: Manogithubnew/shared-gha-actions/.github/actions/init.yml@master
-
-  # 🔨 Stage 2: Build using shared action
-  build:
-    name: 🔨 Build
-    runs-on: ubuntu-latest
-    needs: init
-
-    steps:
-      - name: Run Build Stage from Shared Action
-        uses: Manogithubnew/shared-gha-actions/.github/actions/build_enterprise.yml@master
-
-  # 🚀 Stage 3: Deploy using shared action
-  deploy:
-    name: 🚀 Deploy to OpenShift
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Run Deploy Stage from Shared Action
-        uses: Manogithubnew/shared-gha-actions/.github/actions/ocp_deploy@master
+    uses: Manogithubnew/shared-gha-actions/.github/actions/init.yml@master
+    secrets: < name>
         with:
-          ocp_api_url: ${{ secrets.OCP_API_URL }}
-          ocp_token: ${{ secrets.OCP_TOKEN }}
-          ocp_project: 'my-namespace'
-          deploy_file: 'deployment.yaml'
-          deployment_name: 'my-app'
+          operation: ${{ input.operation }}
+  
+  # 🔨 Stage 2: Build using shared action
+  build-stage:
+    name: 🔨 Build
+    uses: Manogithubnew/shared-gha-actions/.github/actions/build_enterprise.yml@master
+    secrets: < name>
+    needs: 
+      - init
+    with:
+      deployable-artifact: ${{ needs.init.outputs.deployable-artifact }}
+      build-type:  ${{ needs.init.outputs.build-type }}
+    if: ( inputs.operation == null ||  inputs.operation == 'build' )
+
+
+  #  Stage 3: Deploy using shared action
+  ocp-deploy:
+    name:  'Deploy to OpenShift - ${{ matrix.value }}'
+    strategy:
+      matrix:
+        value: ${{ fromJson(needs.init.outputs.config-deploy-map).deploy_environment }}
+      max-parallel: 1
+     uses: Manogithubnew/shared-gha-actions/.github/actions/ocp_deploy@master
+     secrets: < name>
+     needs:
+       - build-stage
+       - init
+     with: 
+       operation: 'deploy-to-${{matrix.value}}'
+       config-deploy-map: ${{ needs.init.outputs.config-deploy-map }}
+       deploy-env: ${{ matrix.value }}
+     if: |
+       !cancelled() && needs.init.outputs.config-deploy-map && needs.init.outputs.deployable-artifact == 'True' &&
+       (needs.init.result != 'failure' && needs.build-stage.result != 'failure' && needs.docker-build.result != 'failure')
+   
+     
+   
